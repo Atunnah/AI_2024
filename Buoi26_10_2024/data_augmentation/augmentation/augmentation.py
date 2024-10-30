@@ -2,10 +2,26 @@ import cv2
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import os
+import json
 
 class YOLODataAugmentation:
-    def __init__(self):
-        pass
+    def __init__(self, config_path: str):
+        with open(config_path, 'r') as config_file:
+            config = json.load(config_file)
+
+        self.brightness = config.get("brightness", 0.2)
+        self.contrast = config.get("contrast", 0.2)
+        self.saturation = config.get("saturation", 0.2)
+        self.scale = config.get("scale", 1.2)
+        self.gaussian_blur_kernel_size = config.get("gaussian_blur_kernel_size", 5)
+        self.motion_blur_size = config.get("motion_blur_size", 5)
+        self.noise_mean = config.get("noise_mean", 0)
+        self.noise_sigma = config.get("noise_sigma", 25)
+        self.crop_x = config["random_crop"]["crop_x"]
+        self.crop_y = config["random_crop"]["crop_y"]
+        self.crop_w = config["random_crop"]["crop_w"]
+        self.crop_h = config["random_crop"]["crop_h"]
 
     def horizontal_flip(self, image: np.ndarray)->np.ndarray:
         """Flip the image horizontally, while adjusting the bouding box coordinates accordingly."""    
@@ -70,7 +86,8 @@ class YOLODataAugmentation:
     
 
 image = cv2.imread(r"D:\Machine Learning HIT14\AI_2024\Buoi26_10_2024\image\meo.jpeg")
-augmentor = YOLODataAugmentation()
+config_path = r'D:\Machine Learning HIT14\AI_2024\Buoi26_10_2024\config\config.json'
+augmentor = YOLODataAugmentation(config_path)
 augmentations = {
     "Original": image,
     "Horizontal Flip": augmentor.horizontal_flip(image),
@@ -84,13 +101,10 @@ augmentations = {
     "Add Noise": augmentor.add_noise(image) 
 }
 
-# Plot all augmentations
-plt.figure(figsize=(15, 10))
-for i, (name, aug_img) in enumerate(augmentations.items()):
-    plt.subplot(2, 5, i + 1)
-    plt.imshow(cv2.cvtColor(aug_img, cv2.COLOR_BGR2RGB))
-    plt.title(name)
-    plt.axis("off")
-plt.tight_layout()
-plt.show()
-    
+output_folder = r"D:\Machine Learning HIT14\AI_2024\Buoi26_10_2024\output"
+os.makedirs(output_folder, exist_ok=True)
+
+for name, aug_img in augmentations.items():
+    file_path = os.path.join(output_folder, f"{name.replace(' ', '_').replace('°', '')}.jpeg")  # Đổi tên file để dễ đọc
+    cv2.imwrite(file_path, aug_img)
+
